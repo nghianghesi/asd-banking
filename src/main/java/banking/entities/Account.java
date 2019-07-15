@@ -11,6 +11,9 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+
 @Entity
 public class Account {
 	@Id 
@@ -19,12 +22,14 @@ public class Account {
 	
 	
 	private String number;
-	private Double balance;
+	private double balance;
+	private AccountType type;
 	
 	@ManyToOne
 	private Customer customer;
 
 	@OneToMany(mappedBy="account")
+	@Cascade(CascadeType.ALL)
 	private List<AccountEntry> entries = new ArrayList<AccountEntry>();
 
 	public String getNumber() {
@@ -36,15 +41,17 @@ public class Account {
 	}
 	
 
-	public Double getBalance() {
+	public double getBalance() {
 		return balance;
 	}
 
-
-	public void setBalance(Double balance) {
-		this.balance = balance;
+	public AccountType getType() {
+		return type;
 	}
 
+	public void setType(AccountType type) {
+		this.type = type;
+	}
 
 	public Customer getCustomer() {
 		return customer;
@@ -61,19 +68,27 @@ public class Account {
 	}
 
 	
-	public void addEntry(AccountEntry entry) {
+	private void addEntry(AccountEntry entry) {
 		entry.account = this;
 		this.entries.add(entry);
-	}
-
-	public void removeEntry(AccountEntry entry) {
-		entry.account = null;
-		this.entries.remove(entry);
 	}
 	
 	public Long getId() {
 		return id;
 	}
+	
+	
+	public boolean modifyBalance(AccountEntryAction action, String byUser, String interactingAccount, double amount){
+		if(this.getBalance()+amount>=0) {
+			this.balance += amount;
+			this.addEntry(new AccountEntry(
+					new Date(), amount, 
+					action, interactingAccount, byUser));
+			return true;
+		}else {
+			return false;
+		}
+	}	
 	
 	
 	@Entity
@@ -87,8 +102,8 @@ public class Account {
 		
 		
 		private Date date;
-		private Double amount;
-		private String description;
+		private double amount;
+		private AccountEntryAction action;
 		private String otherAccountNumber;
 		private String byPersonName;
 		
@@ -96,11 +111,11 @@ public class Account {
 			
 		}
 		
-		public AccountEntry(Date date, Double amount, String description, String otherAccountNumber, String byPersonName) {
+		public AccountEntry(Date date, Double amount, AccountEntryAction description, String otherAccountNumber, String byPersonName) {
 			super();
 			this.date = date;
 			this.amount = amount;
-			this.description = description;
+			this.action = description;
 			this.otherAccountNumber = otherAccountNumber;
 			this.byPersonName = byPersonName;
 		}
@@ -112,8 +127,8 @@ public class Account {
 			return amount;
 		}
 		
-		public String getDescription() {
-			return description;
+		public AccountEntryAction getAction() {
+			return action;
 		}
 		
 		public String getOtherAccountNumber() {

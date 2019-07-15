@@ -1,7 +1,7 @@
-package banking;
+package banking.observers;
 
 import banking.entities.Account;
 
 public interface AccountObserver {
-	void onChanged(Account account);
+	void onNotified(Account account);
 }
